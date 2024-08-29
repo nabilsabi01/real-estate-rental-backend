@@ -1,9 +1,12 @@
 package com.easystay.realestaterental.enums;
 
 public enum PropertyType {
-    APARTMENT,
-    HOUSE,
-    VILLA,
-    COMMERCIAL,
-    OFFICE
+    APARTMENT, 
+    HOUSE, 
+    VILLA, 
+    RIAD, 
+    DAR, 
+    KASBAH, 
+    STUDIO, 
+    DUPLEX
 }

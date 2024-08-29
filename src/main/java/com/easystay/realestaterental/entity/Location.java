@@ -1,22 +1,17 @@
 package com.easystay.realestaterental.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.Setter;
 
 @Embeddable
 @Getter
 @Setter
-public class Address {
-    private String street;
-
-    @Column(nullable = false)
+public class Location {
+    private String country;
     private String city;
-
-    @Column(name = "zip_code")
-    private String zipCode;
-
+    private String address;
+    private String postalCode;
     private Double latitude;
-
     private Double longitude;
 }

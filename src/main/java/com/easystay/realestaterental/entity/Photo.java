@@ -8,9 +8,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "favorites")
-@Getter @Setter
-public class Favorite {
+@Table(name = "photos")
+@Getter
+@Setter
+public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,10 +20,11 @@ public class Favorite {
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "guest_id", nullable = false)
-    private Guest guest;
+    @Column(nullable = false)
+    private String url;
+
+    private String description;
 
     @CreationTimestamp
-    private LocalDateTime favoritedAt;
+    private LocalDateTime uploadedAt;
 }

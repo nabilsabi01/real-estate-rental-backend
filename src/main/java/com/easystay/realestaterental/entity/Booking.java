@@ -1,21 +1,20 @@
 package com.easystay.realestaterental.entity;
 
-import com.easystay.realestaterental.enums.ListingStatus;
-import com.easystay.realestaterental.enums.ListingType;
+import com.easystay.realestaterental.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "listings")
+@Table(name = "bookings")
 @Getter
 @Setter
-public class Listing {
+public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,28 +23,27 @@ public class Listing {
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guest_id", nullable = false)
+    private Guest guest;
+
+    @Column(nullable = false)
+    private LocalDate checkInDate;
+
+    @Column(nullable = false)
+    private LocalDate checkOutDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ListingType type;
+    private BookingStatus status;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ListingStatus status;
+    private Integer totalPrice;
 
-    @Column(name = "available_from")
-    private LocalDateTime availableFrom;
+    private Integer numberOfGuests;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @Column(name = "expiration_date")
-    private LocalDateTime expirationDate;
 }
