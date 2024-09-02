@@ -9,8 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "photos")
-@Getter
-@Setter
+@Getter @Setter
 public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +22,9 @@ public class Photo {
     @Column(nullable = false)
     private String url;
 
-    private String description;
+    private String caption;
+
+    private boolean primaryPhoto;
 
     @CreationTimestamp
     private LocalDateTime uploadedAt;
