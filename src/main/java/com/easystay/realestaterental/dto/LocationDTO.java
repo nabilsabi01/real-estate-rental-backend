@@ -1,10 +1,11 @@
-package com.easystay.realestaterental.dto.response;
+package com.easystay.realestaterental.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-public class LocationResponseDTO {
-    private Long id;
+@Getter
+@Setter
+public class LocationDTO {
     private String country;
     private String city;
     private String address;

@@ -1,12 +1,14 @@
-package com.easystay.realestaterental.dto.response;
+package com.easystay.realestaterental.dto;
 
 import com.easystay.realestaterental.enums.UserRole;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
-public class UserResponseDTO {
+@Getter
+@Setter
+public class UserDTO {
     private Long id;
     private String email;
     private String firstName;
@@ -17,3 +19,4 @@ public class UserResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+

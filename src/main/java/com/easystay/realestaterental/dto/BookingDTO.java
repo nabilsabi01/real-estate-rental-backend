@@ -1,17 +1,19 @@
-package com.easystay.realestaterental.dto.response;
+package com.easystay.realestaterental.dto;
 
 import com.easystay.realestaterental.enums.BookingStatus;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Data
-public class BookingResponseDTO {
+@Getter
+@Setter
+public class BookingDTO {
     private Long id;
-    private PropertyResponseDTO property;
-    private GuestResponseDTO guest;
+    private Long propertyId;
+    private Long guestId;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private BookingStatus status;
