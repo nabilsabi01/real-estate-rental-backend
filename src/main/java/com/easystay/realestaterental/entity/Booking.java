@@ -7,13 +7,13 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
-@Getter
-@Setter
+@Getter @Setter
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,10 +34,11 @@ public class Booking {
     private LocalDate checkOutDate;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private BookingStatus status;
 
     @Column(nullable = false)
-    private Integer totalPrice;
+    private BigDecimal totalPrice;
 
     private Integer numberOfGuests;
 

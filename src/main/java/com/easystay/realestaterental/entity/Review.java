@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reviews")
-@Getter
-@Setter
+@Getter @Setter
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,13 +24,15 @@ public class Review {
     @JoinColumn(name = "guest_id", nullable = false)
     private Guest guest;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "host_id", nullable = false)
+    private Host host;
+
     @Column(nullable = false)
     private Integer rating;
 
     @Column(length = 1000)
     private String comment;
-
-    private Boolean isApproved = false;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

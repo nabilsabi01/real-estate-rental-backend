@@ -1,50 +1,49 @@
 package com.easystay.realestaterental.entity;
 
-import com.easystay.realestaterental.enums.RoleType;
+import com.easystay.realestaterental.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
 @Table(name = "users")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "user_type")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter @Setter
 public abstract class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
-
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
-    private String hashedPassword;
+    private String password;
+
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
 
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    private RoleType role;
+    @Column(nullable = false)
+    private UserRole role;
 
-    @Column(length = 1000)
-    private String bio;
+    private String profilePictureUrl;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    private String profilePictureUrl;
-
-    private Boolean isVerified = false;
 }

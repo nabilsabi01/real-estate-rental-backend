@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,11 +32,16 @@ public class Property {
     private Location location;
 
     @Column(nullable = false)
-    private Integer pricePerNight;
+    private BigDecimal pricePerNight;
 
-    private Integer guestCapacity;
-    private Integer numberOfBedrooms;
-    private Integer numberOfBathrooms;
+    private Integer maxGuests;
+    private Integer bedrooms;
+    private Integer beds;
+    private Integer bathrooms;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PropertyType propertyType;
 
     @ManyToMany
     @JoinTable(
@@ -44,9 +50,6 @@ public class Property {
             inverseJoinColumns = @JoinColumn(name = "amenity_id")
     )
     private Set<Amenity> amenities = new HashSet<>();
-
-    @Enumerated(EnumType.STRING)
-    private PropertyType propertyType;
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Photo> photos = new ArrayList<>();
@@ -57,11 +60,8 @@ public class Property {
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Booking> bookings = new ArrayList<>();
 
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
-    private AvailabilityCalendar calendar;
-
-    private Integer minNightsStay;
-    private Integer maxNightsStay;
+//    private Integer minNightsStay;
+//    private Integer maxNightsStay;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "host_id", nullable = false)
