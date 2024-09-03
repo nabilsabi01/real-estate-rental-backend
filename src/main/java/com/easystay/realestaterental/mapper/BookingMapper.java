@@ -5,7 +5,7 @@ import com.easystay.realestaterental.entity.Booking;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {PropertyMapper.class, PropertyMapper.class, GuestMapper.class} )
 public interface BookingMapper {
 
     @Mapping(source = "property.id", target = "propertyId")

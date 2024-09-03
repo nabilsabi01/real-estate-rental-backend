@@ -20,11 +20,14 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/properties/{propertyId}/photos")
 public class PhotoController {
 
-    @Autowired
-    private PhotoService photoService;
+    private final PhotoService photoService;
 
-    @Autowired
-    private PhotoMapper photoMapper;
+    private final PhotoMapper photoMapper;
+
+    public PhotoController(PhotoService photoService, PhotoMapper photoMapper) {
+        this.photoService = photoService;
+        this.photoMapper = photoMapper;
+    }
 
     @PostMapping
     public ResponseEntity<?> uploadPhoto(

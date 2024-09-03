@@ -7,7 +7,6 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -22,11 +21,12 @@ public class PropertyDTO {
     private Integer beds;
     private Integer bathrooms;
     private PropertyType propertyType;
-    private Set<Long> amenityIds;
+    private Long hostId;
+    private List<Long> amenityIds;
     private List<Long> photoIds;
     private List<Long> reviewIds;
     private List<Long> bookingIds;
-    private Long hostId;
+    private List<Long> favoriteIds;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

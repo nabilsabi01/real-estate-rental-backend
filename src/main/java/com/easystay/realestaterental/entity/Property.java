@@ -31,16 +31,18 @@ public class Property {
     @Embedded
     private Location location;
 
-    @Column(nullable = false)
+    @Column(name = "price_per_night", nullable = false)
     private BigDecimal pricePerNight;
 
+    @Column(name = "max_guests")
     private Integer maxGuests;
+
     private Integer bedrooms;
     private Integer beds;
     private Integer bathrooms;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "property_type", nullable = false)
     private PropertyType propertyType;
 
     @ManyToMany
@@ -60,16 +62,18 @@ public class Property {
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Booking> bookings = new ArrayList<>();
 
-//    private Integer minNightsStay;
-//    private Integer maxNightsStay;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "host_id", nullable = false)
     private Host host;
 
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Favorite> favorites = new ArrayList<>();
+
     @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }

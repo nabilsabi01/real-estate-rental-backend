@@ -9,7 +9,6 @@ import com.easystay.realestaterental.repository.GuestRepository;
 import com.easystay.realestaterental.repository.HostRepository;
 import com.easystay.realestaterental.repository.PropertyRepository;
 import com.easystay.realestaterental.repository.ReviewRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +23,10 @@ public class ReviewService {
 
     private final GuestRepository guestRepository;
 
-    private final HostRepository hostRepository;
-
     public ReviewService(ReviewRepository reviewRepository, PropertyRepository propertyRepository, GuestRepository guestRepository, HostRepository hostRepository) {
         this.reviewRepository = reviewRepository;
         this.propertyRepository = propertyRepository;
         this.guestRepository = guestRepository;
-        this.hostRepository = hostRepository;
     }
 
     public List<Review> getReviewsByPropertyId(Long propertyId) {
