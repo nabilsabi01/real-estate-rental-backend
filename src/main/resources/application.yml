@@ -18,6 +18,18 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  cloudinary:
+    cloud-name: dofemqxug
+    api-key: 843943154395968
+    api-secret: en7Hwsh1UAsrYznBheh1K4Q-y_4
 
 server:
   port: 8080
+
+app:
+  file:
+    max-size: 10485760

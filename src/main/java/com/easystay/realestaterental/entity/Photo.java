@@ -3,7 +3,6 @@ package com.easystay.realestaterental.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -24,8 +23,9 @@ public class Photo {
 
     private String caption;
 
+    @Column(name = "is_primary")
     private boolean primaryPhoto;
 
-    @CreationTimestamp
-    private LocalDateTime uploadedAt;
+    @Column(name = "uploaded_at")
+    private LocalDateTime uploadedAt = LocalDateTime.now();
 }
