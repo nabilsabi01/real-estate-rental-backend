@@ -31,4 +31,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
 
     @Query("SELECT p FROM Property p WHERE p.title LIKE %:keyword% OR p.description LIKE %:keyword%")
     List<Property> searchProperties(String keyword);
+
+    @Query("SELECT p FROM Property p WHERE p.location.postalCode = :postalCode")
+    List<Property> findByPostalCode(String postalCode);
 }
