@@ -3,6 +3,9 @@ package com.easystay.realestaterental.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
 
@@ -18,14 +21,10 @@ public class Photo {
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
 
-    @Column(nullable = false)
-    private String url;
-
-    private String caption;
-
-    @Column(name = "is_primary")
-    private boolean primaryPhoto;
+    @Column(name ="photo_url", nullable = false)
+    private String photoUrl;
 
     @Column(name = "uploaded_at")
-    private LocalDateTime uploadedAt = LocalDateTime.now();
+    @CreationTimestamp
+    private LocalDateTime uploadedAt;
 }

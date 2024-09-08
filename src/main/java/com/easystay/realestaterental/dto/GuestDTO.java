@@ -1,12 +1,12 @@
 package com.easystay.realestaterental.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class GuestDTO extends UserDTO {
     private List<Long> bookingIds;
     private List<Long> writtenReviewIds;

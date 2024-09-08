@@ -40,10 +40,10 @@ public class AuthenticationService {
         }
 
         User user;
-        if ("host".equalsIgnoreCase(request.getRole())) {
+        if ("host".equalsIgnoreCase(String.valueOf(request.getRole()))) {
             user = new Host();
             user.setRole(UserRole.HOST);
-        } else if ("guest".equalsIgnoreCase(request.getRole())) {
+        } else if ("guest".equalsIgnoreCase(String.valueOf(request.getRole()))) {
             user = new Guest();
             user.setRole(UserRole.GUEST);
         } else {

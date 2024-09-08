@@ -2,19 +2,20 @@ package com.easystay.realestaterental.mapper;
 
 import com.easystay.realestaterental.dto.ReviewDTO;
 import com.easystay.realestaterental.entity.Review;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface ReviewMapper {
-
-    @Mapping(source = "property.id", target = "propertyId")
-    @Mapping(source = "guest.id", target = "guestId")
-    @Mapping(source = "host.id", target = "hostId")
+    @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "guestId", source = "guest.id")
     ReviewDTO toDTO(Review review);
 
     @Mapping(target = "property", ignore = true)
     @Mapping(target = "guest", ignore = true)
-    @Mapping(target = "host", ignore = true)
     Review toEntity(ReviewDTO reviewDTO);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "property", ignore = true)
+    @Mapping(target = "guest", ignore = true)
+    void updateReviewFromDto(ReviewDTO dto, @MappingTarget Review entity);
 }

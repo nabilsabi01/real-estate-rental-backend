@@ -2,17 +2,20 @@ package com.easystay.realestaterental.mapper;
 
 import com.easystay.realestaterental.dto.BookingDTO;
 import com.easystay.realestaterental.entity.Booking;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = {PropertyMapper.class, PropertyMapper.class, GuestMapper.class} )
+@Mapper(componentModel = "spring", uses = {PropertyMapper.class, GuestMapper.class})
 public interface BookingMapper {
-
-    @Mapping(source = "property.id", target = "propertyId")
-    @Mapping(source = "guest.id", target = "guestId")
+    @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "guestId", source = "guest.id")
     BookingDTO toDTO(Booking booking);
 
     @Mapping(target = "property", ignore = true)
     @Mapping(target = "guest", ignore = true)
     Booking toEntity(BookingDTO bookingDTO);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "property", ignore = true)
+    @Mapping(target = "guest", ignore = true)
+    void updateBookingFromDto(BookingDTO dto, @MappingTarget Booking entity);
 }

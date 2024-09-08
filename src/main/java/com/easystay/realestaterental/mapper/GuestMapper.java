@@ -2,41 +2,26 @@ package com.easystay.realestaterental.mapper;
 
 import com.easystay.realestaterental.dto.GuestDTO;
 import com.easystay.realestaterental.entity.Guest;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Mapper(componentModel = "spring", uses = {BookingMapper.class, ReviewMapper.class, FavoriteMapper.class})
+@Mapper(componentModel = "spring")
 public interface GuestMapper {
+    @Mapping(target = "bookingIds", ignore = true)
+    @Mapping(target = "writtenReviewIds", ignore = true)
+    @Mapping(target = "favoriteIds", ignore = true)
+    GuestDTO toGuestDTO(Guest guest);
 
-    @Mapping(target = "bookingIds", expression = "java(mapBookingIds(guest))")
-    @Mapping(target = "writtenReviewIds", expression = "java(mapWrittenReviewIds(guest))")
-    @Mapping(target = "favoriteIds", expression = "java(mapFavoriteIds(guest))")
-    GuestDTO toDTO(Guest guest);
-
+    @Mapping(target = "password", ignore = true)
     @Mapping(target = "bookings", ignore = true)
     @Mapping(target = "writtenReviews", ignore = true)
     @Mapping(target = "favorites", ignore = true)
+    Guest toGuest(GuestDTO guestDTO);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "password", ignore = true)
-    Guest toEntity(GuestDTO guestDTO);
-
-    default List<Long> mapBookingIds(Guest guest) {
-        return guest.getBookings().stream()
-                .map(booking -> booking.getId())
-                .collect(Collectors.toList());
-    }
-
-    default List<Long> mapWrittenReviewIds(Guest guest) {
-        return guest.getWrittenReviews().stream()
-                .map(review -> review.getId())
-                .collect(Collectors.toList());
-    }
-
-    default List<Long> mapFavoriteIds(Guest guest) {
-        return guest.getFavorites().stream()
-                .map(favorite -> favorite.getId())
-                .collect(Collectors.toList());
-    }
+    @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "writtenReviews", ignore = true)
+    @Mapping(target = "favorites", ignore = true)
+    @Mapping(target = "authorities", ignore = true)
+    void updateGuestFromDTO(GuestDTO guestDTO, @MappingTarget Guest guest);
 }

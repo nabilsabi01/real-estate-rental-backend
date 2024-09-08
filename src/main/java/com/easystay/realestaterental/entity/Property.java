@@ -2,7 +2,9 @@ package com.easystay.realestaterental.entity;
 
 import com.easystay.realestaterental.enums.PropertyType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,8 +18,12 @@ import java.util.Set;
 
 @Entity
 @Table(name = "properties")
-@Getter @Setter
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Property {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,7 +34,8 @@ public class Property {
     @Column(length = 2000)
     private String description;
 
-    @Embedded
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id", referencedColumnName = "id", nullable = false)
     private Location location;
 
     @Column(name = "price_per_night", nullable = false)
@@ -45,7 +52,7 @@ public class Property {
     @Column(name = "property_type", nullable = false)
     private PropertyType propertyType;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "property_amenities",
             joinColumns = @JoinColumn(name = "property_id"),

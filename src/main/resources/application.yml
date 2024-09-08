@@ -15,15 +15,11 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
 
-#  flyway:
-#    enabled: true
-#    locations: classpath:db/migration
-#    baseline-on-migrate: true
-
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
 cloudinary:
   cloud-name: dofemqxug
   api-key: 843943154395968

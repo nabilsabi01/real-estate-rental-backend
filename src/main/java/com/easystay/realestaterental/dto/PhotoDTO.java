@@ -1,17 +1,22 @@
 package com.easystay.realestaterental.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 public class PhotoDTO {
     private Long id;
-    private String url;
-    private String caption;
-    private boolean primaryPhoto;
+
+    @NotBlank(message = "Photo URL is required")
+    private String photoUrl;
+
+    @NotNull(message = "Property ID is required")
     private Long propertyId;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime uploadedAt;
 }

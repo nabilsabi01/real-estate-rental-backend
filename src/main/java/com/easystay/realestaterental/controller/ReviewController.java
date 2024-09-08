@@ -1,8 +1,10 @@
 package com.easystay.realestaterental.controller;
 
-import com.easystay.realestaterental.entity.Review;
+import com.easystay.realestaterental.dto.ReviewDTO;
 import com.easystay.realestaterental.service.ReviewService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,49 +12,39 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
+@RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    public ReviewController(ReviewService reviewService) {
-        this.reviewService = reviewService;
+    @PostMapping
+    public ResponseEntity<ReviewDTO> createReview(@Valid @RequestBody ReviewDTO reviewDTO) {
+        ReviewDTO createdReview = reviewService.createReview(reviewDTO);
+        return new ResponseEntity<>(createdReview, HttpStatus.CREATED);
     }
 
     @GetMapping("/property/{propertyId}")
-    public ResponseEntity<List<Review>> getReviewsByPropertyId(@PathVariable Long propertyId) {
-        List<Review> reviews = reviewService.getReviewsByPropertyId(propertyId);
+    public ResponseEntity<List<ReviewDTO>> getReviewsByPropertyId(@PathVariable Long propertyId) {
+        List<ReviewDTO> reviews = reviewService.getReviewsByPropertyId(propertyId);
         return ResponseEntity.ok(reviews);
     }
 
     @GetMapping("/guest/{guestId}")
-    public ResponseEntity<List<Review>> getReviewsByGuestId(@PathVariable Long guestId) {
-        List<Review> reviews = reviewService.getReviewsByGuestId(guestId);
+    public ResponseEntity<List<ReviewDTO>> getReviewsByGuestId(@PathVariable Long guestId) {
+        List<ReviewDTO> reviews = reviewService.getReviewsByGuestId(guestId);
         return ResponseEntity.ok(reviews);
     }
 
     @GetMapping("/host/{hostId}")
-    public ResponseEntity<List<Review>> getReviewsByHostId(@PathVariable Long hostId) {
-        List<Review> reviews = reviewService.getReviewsByHostId(hostId);
+    public ResponseEntity<List<ReviewDTO>> getReviewsByHostId(@PathVariable Long hostId) {
+        List<ReviewDTO> reviews = reviewService.getReviewsByHostId(hostId);
         return ResponseEntity.ok(reviews);
     }
 
-    @PostMapping("/property/{propertyId}/guest/{guestId}")
-    public ResponseEntity<Review> createReview(
-            @PathVariable Long propertyId,
-            @PathVariable Long guestId,
-            @RequestParam int rating,
-            @RequestParam String comment) {
-        Review review = reviewService.createReview(propertyId, guestId, rating, comment);
-        return ResponseEntity.ok(review);
-    }
-
     @PutMapping("/{reviewId}")
-    public ResponseEntity<Review> updateReview(
-            @PathVariable Long reviewId,
-            @RequestParam int rating,
-            @RequestParam String comment) {
-        Review review = reviewService.updateReview(reviewId, rating, comment);
-        return ResponseEntity.ok(review);
+    public ResponseEntity<ReviewDTO> updateReview(@PathVariable Long reviewId, @Valid @RequestBody ReviewDTO reviewDTO) {
+        ReviewDTO updatedReview = reviewService.updateReview(reviewId, reviewDTO);
+        return ResponseEntity.ok(updatedReview);
     }
 
     @DeleteMapping("/{reviewId}")

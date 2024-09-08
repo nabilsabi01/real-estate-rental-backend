@@ -2,33 +2,29 @@ package com.easystay.realestaterental.mapper;
 
 import com.easystay.realestaterental.dto.HostDTO;
 import com.easystay.realestaterental.entity.Host;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.easystay.realestaterental.entity.Property;
 
-@Mapper(componentModel = "spring", uses = {PropertyMapper.class, ReviewMapper.class})
+@Mapper(componentModel = "spring")
 public interface HostMapper {
-
     @Mapping(target = "propertyIds", expression = "java(mapPropertyIds(host))")
-    @Mapping(target = "receivedReviewIds", expression = "java(mapReceivedReviewIds(host))")
-    HostDTO toDTO(Host host);
+    HostDTO toHostDTO(Host host);
 
-    @Mapping(target = "properties", ignore = true)
-    @Mapping(target = "receivedReviews", ignore = true)
     @Mapping(target = "password", ignore = true)
-    Host toEntity(HostDTO hostDTO);
+    @Mapping(target = "properties", ignore = true)
+    @Mapping(target = "authorities", ignore = true)
+    Host toHost(HostDTO hostDTO);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "properties", ignore = true)
+    @Mapping(target = "authorities", ignore = true)
+    void updateHostFromDTO(HostDTO hostDTO, @MappingTarget Host host);
 
     default List<Long> mapPropertyIds(Host host) {
-        return host.getProperties().stream()
-                .map(property -> property.getId())
-                .collect(Collectors.toList());
-    }
-
-    default List<Long> mapReceivedReviewIds(Host host) {
-        return host.getReceivedReviews().stream()
-                .map(review -> review.getId())
-                .collect(Collectors.toList());
+        return host.getProperties() != null ? host.getProperties().stream().map(Property::getId).collect(Collectors.toList()) : null;
     }
 }

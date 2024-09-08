@@ -2,17 +2,20 @@ package com.easystay.realestaterental.mapper;
 
 import com.easystay.realestaterental.dto.FavoriteDTO;
 import com.easystay.realestaterental.entity.Favorite;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface FavoriteMapper {
-
-    @Mapping(source = "property.id", target = "propertyId")
-    @Mapping(source = "guest.id", target = "guestId")
+    @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "guestId", source = "guest.id")
     FavoriteDTO toDTO(Favorite favorite);
 
     @Mapping(target = "property", ignore = true)
     @Mapping(target = "guest", ignore = true)
     Favorite toEntity(FavoriteDTO favoriteDTO);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "property", ignore = true)
+    @Mapping(target = "guest", ignore = true)
+    void updateFavoriteFromDto(FavoriteDTO dto, @MappingTarget Favorite entity);
 }
