@@ -15,6 +15,7 @@ public interface GuestMapper {
     @Mapping(target = "bookings", ignore = true)
     @Mapping(target = "writtenReviews", ignore = true)
     @Mapping(target = "favorites", ignore = true)
+    @Mapping(target = "authorities", ignore = true)
     Guest toGuest(GuestDTO guestDTO);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

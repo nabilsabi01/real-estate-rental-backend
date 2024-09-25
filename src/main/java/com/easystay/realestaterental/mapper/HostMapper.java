@@ -6,6 +6,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 import com.easystay.realestaterental.entity.Property;
 
 @Mapper(componentModel = "spring")

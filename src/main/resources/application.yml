@@ -2,9 +2,9 @@ spring:
   application:
     name: RealEstateRental
   datasource:
-    url: jdbc:mysql://localhost:3306/rental_property_db
+    url: jdbc:mysql://localhost:3306/rental_property_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
     username: root
-    password: 1234
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -26,7 +26,7 @@ cloudinary:
   api-secret: en7Hwsh1UAsrYznBheh1K4Q-y_4
 
 server:
-  port: 8080
+  port: 8081
 
 app:
   file:

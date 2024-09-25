@@ -1,62 +1,113 @@
 package com.easystay.realestaterental.service;
 
+import com.easystay.realestaterental.dto.FavoriteDTO;
 import com.easystay.realestaterental.entity.Favorite;
 import com.easystay.realestaterental.entity.Guest;
 import com.easystay.realestaterental.entity.Property;
 import com.easystay.realestaterental.exception.ResourceNotFoundException;
+import com.easystay.realestaterental.exception.DuplicateResourceException;
+import com.easystay.realestaterental.exception.BadRequestException;
+import com.easystay.realestaterental.mapper.FavoriteMapper;
 import com.easystay.realestaterental.repository.FavoriteRepository;
 import com.easystay.realestaterental.repository.GuestRepository;
 import com.easystay.realestaterental.repository.PropertyRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class FavoriteService {
 
     private final FavoriteRepository favoriteRepository;
-
     private final GuestRepository guestRepository;
-
     private final PropertyRepository propertyRepository;
-
-    public FavoriteService(FavoriteRepository favoriteRepository, GuestRepository guestRepository, PropertyRepository propertyRepository) {
-        this.favoriteRepository = favoriteRepository;
-        this.guestRepository = guestRepository;
-        this.propertyRepository = propertyRepository;
-    }
-
-    public List<Favorite> getFavoritesByGuestId(Long guestId) {
-        return favoriteRepository.findByGuestId(guestId);
-    }
+    private final FavoriteMapper favoriteMapper;
 
     @Transactional
-    public Favorite addFavorite(Long guestId, Long propertyId) {
-        Guest guest = guestRepository.findById(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Guest not found"));
-        Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+    public FavoriteDTO addFavorite(Long guestId, Long propertyId) {
+        validateIds(guestId, propertyId);
 
-        if (favoriteRepository.existsByGuestIdAndPropertyId(guestId, propertyId)) {
-            throw new IllegalStateException("Property is already in favorites");
-        }
+        return Optional.of(new Favorite())
+                .filter(f -> !favoriteRepository.existsByGuestIdAndPropertyId(guestId, propertyId))
+                .map(favorite -> {
+                    Guest guest = findGuest(guestId);
+                    Property property = findProperty(propertyId);
+                    favorite.setGuest(guest);
+                    favorite.setProperty(property);
+                    return favoriteRepository.save(favorite);
+                })
+                .map(favoriteMapper::toDTO)
+                .orElseThrow(() -> new DuplicateResourceException("Property is already in favorites"));
+    }
 
-        Favorite favorite = new Favorite();
-        favorite.setGuest(guest);
-        favorite.setProperty(property);
-        return favoriteRepository.save(favorite);
+    public Page<FavoriteDTO> getFavoritesByGuestId(Long guestId, Pageable pageable) {
+        validateId(guestId, "Guest ID");
+        ensureGuestExists(guestId);
+
+        return favoriteRepository.findByGuestId(guestId, pageable)
+                .map(favoriteMapper::toDTO);
     }
 
     @Transactional
     public void removeFavorite(Long guestId, Long propertyId) {
-        if (!favoriteRepository.existsByGuestIdAndPropertyId(guestId, propertyId)) {
-            throw new ResourceNotFoundException("Favorite not found");
-        }
-        favoriteRepository.deleteByGuestIdAndPropertyId(guestId, propertyId);
+        validateIds(guestId, propertyId);
+
+        favoriteRepository.findByGuestIdAndPropertyId(guestId, propertyId)
+                .ifPresentOrElse(
+                        favoriteRepository::delete,
+                        () -> {
+                            throw new ResourceNotFoundException("Favorite not found for guest id: " + guestId + " and property id: " + propertyId);
+                        }
+                );
     }
 
     public boolean isFavorite(Long guestId, Long propertyId) {
+        validateIds(guestId, propertyId);
         return favoriteRepository.existsByGuestIdAndPropertyId(guestId, propertyId);
+    }
+
+    public long getFavoriteCount(Long propertyId) {
+        validateId(propertyId, "Property ID");
+        ensurePropertyExists(propertyId);
+        return favoriteRepository.countByPropertyId(propertyId);
+    }
+
+    private void validateIds(Long guestId, Long propertyId) {
+        validateId(guestId, "Guest ID");
+        validateId(propertyId, "Property ID");
+    }
+
+    private void validateId(Long id, String fieldName) {
+        Optional.ofNullable(id)
+                .orElseThrow(() -> new BadRequestException(fieldName + " must not be null"));
+    }
+
+    private Guest findGuest(Long guestId) {
+        return guestRepository.findById(guestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Guest not found with id: " + guestId));
+    }
+
+    private Property findProperty(Long propertyId) {
+        return propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+    }
+
+    private void ensureGuestExists(Long guestId) {
+        if (!guestRepository.existsById(guestId)) {
+            throw new ResourceNotFoundException("Guest not found with id: " + guestId);
+        }
+    }
+
+    private void ensurePropertyExists(Long propertyId) {
+        if (!propertyRepository.existsById(propertyId)) {
+            throw new ResourceNotFoundException("Property not found with id: " + propertyId);
+        }
     }
 }
