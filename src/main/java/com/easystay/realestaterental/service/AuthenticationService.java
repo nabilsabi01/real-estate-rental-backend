@@ -35,48 +35,52 @@ public class AuthenticationService {
 
     @Transactional
     public AuthResponseDTO register(RegistrationRequestDTO request) {
+        // Check if email already exists in the system
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Cet email existe déjà");
+            throw new DuplicateResourceException("The email address is already in use.");
         }
 
         User user;
-        if ("host".equalsIgnoreCase(String.valueOf(request.getRole()))) {
-            user = new Host();
-            user.setRole(UserRole.HOST);
-        } else if ("guest".equalsIgnoreCase(String.valueOf(request.getRole()))) {
-            user = new Guest();
-            user.setRole(UserRole.GUEST);
-        } else {
-            throw new BadRequestException("Rôle invalide");
-        }
+        UserRole role = request.getRole();
+        user = switch (role) {
+            case HOST -> new Host();
+            case GUEST -> new Guest();
+            default -> throw new BadRequestException("Invalid role provided.");
+        };
 
+        // Set common user properties
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setPhoneNumber(request.getPhoneNumber());
+        user.setRole(role);
 
+        // Save the user based on role
         if (user instanceof Host) {
             hostRepository.save((Host) user);
         } else {
             guestRepository.save((Guest) user);
         }
 
+        // Generate JWT token and return the response
         String token = jwtService.generateToken(user);
         return new AuthResponseDTO(token, user.getRole().toString());
     }
 
     public AuthResponseDTO login(LoginRequestDTO request) {
         try {
+            // Authenticate user using email and password
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
 
+            // Retrieve authenticated user and generate token
             User user = (User) authentication.getPrincipal();
             String token = jwtService.generateToken(user);
             return new AuthResponseDTO(token, user.getRole().toString());
         } catch (AuthenticationException e) {
-            throw new BadRequestException("Invalid email or password");
+            throw new BadRequestException("Invalid email or password.");
         }
     }
 }

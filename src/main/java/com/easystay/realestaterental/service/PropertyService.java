@@ -126,4 +126,16 @@ public class PropertyService {
                 })
                 .collect(Collectors.toList());
     }
+
+
+    public List<PropertyDTO> getFeaturedProperties() {
+        // This is a simple implementation. You might want to add more sophisticated criteria
+        // for determining featured properties, such as high ratings or recent popularity.
+        List<Property> featuredProperties = propertyRepository.findTop10ByOrderByCreatedAtDesc();
+        return featuredProperties.stream()
+                .map(propertyMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+
 }

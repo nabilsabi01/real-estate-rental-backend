@@ -1,39 +1,62 @@
+# Application Configuration
 spring:
   application:
     name: RealEstateRental
+
+  # Database Configuration
   datasource:
-    url: jdbc:mysql://localhost:3306/rental_property_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/rental_property_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA / Hibernate Configuration
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: update  # Be cautious with this in production
+    show-sql: true  # Disable in production
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true  # Disable in production
 
+  # File Upload Configuration
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
 
-cloudinary:
-  cloud-name: dofemqxug
-  api-key: 843943154395968
-  api-secret: en7Hwsh1UAsrYznBheh1K4Q-y_4
-
+# Server Configuration
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
+  error:
+    include-message: always  # Be cautious with this in production
+    include-binding-errors: always  # Be cautious with this in production
 
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dofemqxug}
+  api-key: ${CLOUDINARY_API_KEY:843943154395968}
+  api-secret: ${CLOUDINARY_API_SECRET:en7Hwsh1UAsrYznBheh1K4Q-y_4}
+
+# Application Specific Configuration
 app:
   file:
-    max-size: 10485760
+    max-size: 10485760  # 10MB in bytes
 
+# Security Configuration
 application:
   security:
     jwt:
-      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      expiration: 86400000
+      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in milliseconds
+      issuer: ${JWT_ISSUER:RealEstateRental}
+      audience: ${JWT_AUDIENCE:real-estate-rental-api}
+
+# Swagger / OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method

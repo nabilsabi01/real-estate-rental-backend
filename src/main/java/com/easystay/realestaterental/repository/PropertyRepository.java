@@ -34,4 +34,8 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
 
     @Query("SELECT p FROM Property p WHERE p.location.postalCode = :postalCode")
     List<Property> findByPostalCode(String postalCode);
+
+    long countByPropertyType(PropertyType propertyType);
+
+    List<Property> findTop10ByOrderByCreatedAtDesc();
 }

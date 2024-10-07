@@ -8,5 +8,16 @@ public enum PropertyType {
     CHALET,
     BUNGALOW,
     CABIN,
-    STUDIO
+    STUDIO,
+    CONDO,
+    PENTHOUSE,
+    LOFT,
+    FARMHOUSE,
+    TREEHOUSE,
+    BOAT,
+    TENT,
+    YURT,
+    LUXURY_VILLA,
+    BED_AND_BREAKFAST,
+    GUEST_HOUSE
 }

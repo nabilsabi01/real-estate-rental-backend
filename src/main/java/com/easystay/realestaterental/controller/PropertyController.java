@@ -1,7 +1,6 @@
 package com.easystay.realestaterental.controller;
 
 import com.easystay.realestaterental.dto.PropertyDTO;
-import com.easystay.realestaterental.service.CloudinaryService;
 import com.easystay.realestaterental.service.PropertyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +15,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/properties")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class PropertyController {
 
     private final PropertyService propertyService;
-    private final CloudinaryService cloudinaryService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PropertyDTO> createProperty(
@@ -69,5 +68,11 @@ public class PropertyController {
             @PathVariable Long photoId) {
         propertyService.deletePhotoFromProperty(propertyId, photoId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/featured")
+    public ResponseEntity<List<PropertyDTO>> getFeaturedProperties() {
+        List<PropertyDTO> featuredProperties = propertyService.getFeaturedProperties();
+        return ResponseEntity.ok(featuredProperties);
     }
 }
