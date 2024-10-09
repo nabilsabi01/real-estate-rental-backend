@@ -2,54 +2,61 @@ pipeline {
     agent any
 
     environment {
-        SONAR_CREDENTIALS = 'real-estate-sonarqube-credentials'  // SonarQube credentials ID
-        DOCKER_CREDENTIALS = 'real-estate-dockerhub-credentials' // Docker Hub credentials ID
-        DOCKER_IMAGE = 'nabilsabi/real-estate-rental-backend'    // Docker image name with your Docker Hub username
-        DOCKER_TAG = "${env.BUILD_NUMBER}"                       // Tag the Docker image with the build number
-        SONAR_HOST_URL = 'http://localhost:9000'                 // SonarQube server URL (adjust as needed)
-        SONAR_PROJECT_KEY = 'real-estate-app'                    // SonarQube project key
-        GIT_REPO = 'https://github.com/nabilsabi01/real-estate-rental-backend.git'  // Your GitHub repository link
+        // Use descriptive names for credentials and keep them secret
+        SONAR_CREDENTIALS = credentials('real-estate-sonarqube-credentials')
+        DOCKER_CREDENTIALS = credentials('real-estate-dockerhub-credentials')
+
+        // Project-specific variables
+        DOCKER_IMAGE = 'nabilsabi/real-estate-rental-backend'
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
+
+        // SonarQube configuration
+        SONAR_HOST_URL = 'http://localhost:9000'
+        SONAR_PROJECT_KEY = 'real-estate-sonarqube-jenkins'
+        SONAR_PROJECT_NAME = 'Real Estate SonarQube Jenkins'
+
+        // Source control
+        GITHUB_REPO_URL = 'https://github.com/nabilsabi01/real-estate-rental-backend.git'
     }
 
     tools {
-        maven 'Maven 3.9.9'  // Use Maven for the build
-        jdk 'JDK17'         // Use JDK 17 for the Java project
+        maven 'Maven 3.9.9'
+        jdk 'JDK17'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout code from your GitHub repository
-                git branch: 'main', url: "${env.GIT_REPO}"
+                git branch: 'main', url: "${env.GITHUB_REPO_URL}"
             }
         }
 
         stage('Build') {
             steps {
-                bat 'mvn clean package -DskipTests'  // Build the project and skip tests (use bat for Windows)
+                bat 'mvn clean package -DskipTests'
             }
         }
 
         stage('Unit Tests') {
             steps {
-                bat 'mvn test'  // Run unit tests using bat command
+                bat 'mvn test'
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'  // Publish JUnit test reports
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    // Run SonarQube analysis with credentials and project key
+                withSonarQubeEnv('SonarQubeServer') {
                     bat """
                         mvn sonar:sonar ^
                         -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
+                        -Dsonar.projectName="${SONAR_PROJECT_NAME}" ^
                         -Dsonar.host.url=${SONAR_HOST_URL} ^
-                        -Dsonar.login=${SONAR_CREDENTIALS}
+                        -Dsonar.token=${SONAR_CREDENTIALS_PSW}
                     """
                 }
             }
@@ -58,7 +65,7 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true  // Wait for SonarQube Quality Gate result
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -66,7 +73,6 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    // Build the Docker image using the Dockerfile
                     bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
@@ -75,16 +81,17 @@ pipeline {
         stage('Docker Push') {
             steps {
                 script {
-                    bat "docker login -u %DOCKER_USER% -p %DOCKER_PASSWORD%" // Docker credentials passed via env variables
-                    bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}" // Push the tagged image
-                    bat "docker push ${DOCKER_IMAGE}:latest"  // Push the latest tag
+                    withCredentials([usernamePassword(credentialsId: 'real-estate-dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        bat "docker login -u %DOCKER_USER% -p %DOCKER_PASS%"
+                        bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        bat "docker push ${DOCKER_IMAGE}:latest"
+                    }
                 }
             }
         }
 
         stage('Deploy to Staging') {
             steps {
-                // Use Docker Compose to deploy to the staging environment (Windows-compatible commands)
                 bat """
                     docker-compose -f docker-compose.staging.yml down
                     docker-compose -f docker-compose.staging.yml up -d
@@ -92,38 +99,24 @@ pipeline {
             }
         }
 
-        stage('Integration Tests on Staging') {
+        stage('Integration Tests') {
             steps {
-                // Run integration tests on the staging environment
                 bat 'mvn verify -Dspring.profiles.active=staging'
-            }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                branch 'main'  // Deploy to production only from the main branch
-            }
-            steps {
-                input 'Deploy to production?'  // Manual confirmation before deploying to production
-                bat """
-                    docker-compose -f docker-compose.prod.yml down
-                    docker-compose -f docker-compose.prod.yml up -d
-                """
             }
         }
     }
 
     post {
         always {
-            cleanWs()  // Clean up the workspace after the pipeline completes
+            cleanWs()
         }
         success {
-            echo 'Pipeline succeeded!'  // Success message
-            echo "Check the GitHub repo for the code: ${env.GIT_REPO}"  // Print the GitHub repo link
+            echo 'Pipeline succeeded!'
+            echo "Check the GitHub repo for the code: ${env.GITHUB_REPO_URL}"
         }
         failure {
-            echo 'Pipeline failed!'  // Failure message
-            echo "Check the GitHub repo for the code: ${env.GIT_REPO}"  // Print the GitHub repo link
+            echo 'Pipeline failed!'
+            echo "Check the GitHub repo for the code: ${env.GITHUB_REPO_URL}"
         }
     }
 }
