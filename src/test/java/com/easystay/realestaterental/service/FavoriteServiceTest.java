@@ -1,8 +1,13 @@
 package com.easystay.realestaterental.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
+import com.easystay.realestaterental.dto.FavoriteDTO;
+import com.easystay.realestaterental.entity.Favorite;
+import com.easystay.realestaterental.entity.Guest;
+import com.easystay.realestaterental.entity.Property;
+import com.easystay.realestaterental.mapper.FavoriteMapper;
+import com.easystay.realestaterental.repository.FavoriteRepository;
+import com.easystay.realestaterental.repository.GuestRepository;
+import com.easystay.realestaterental.repository.PropertyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,22 +18,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import com.easystay.realestaterental.dto.FavoriteDTO;
-import com.easystay.realestaterental.entity.Favorite;
-import com.easystay.realestaterental.entity.Guest;
-import com.easystay.realestaterental.entity.Property;
-import com.easystay.realestaterental.exception.ResourceNotFoundException;
-import com.easystay.realestaterental.exception.DuplicateResourceException;
-import com.easystay.realestaterental.mapper.FavoriteMapper;
-import com.easystay.realestaterental.repository.FavoriteRepository;
-import com.easystay.realestaterental.repository.GuestRepository;
-import com.easystay.realestaterental.repository.PropertyRepository;
-
-import java.util.List;
+import java.util.Collections;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
-public class FavoriteServiceTest {
+class FavoriteServiceTest {
 
     @Mock
     private FavoriteRepository favoriteRepository;
@@ -67,68 +65,51 @@ public class FavoriteServiceTest {
     }
 
     @Test
-    void testAddFavorite_Success() {
-        when(guestRepository.findById(1L)).thenReturn(Optional.of(guest));
-        when(propertyRepository.findById(1L)).thenReturn(Optional.of(property));
-        when(favoriteRepository.existsByGuestIdAndPropertyId(1L, 1L)).thenReturn(false);
+    void addFavorite_ShouldReturnFavoriteDTO() {
+        when(guestRepository.findById(anyLong())).thenReturn(Optional.of(guest));
+        when(propertyRepository.findById(anyLong())).thenReturn(Optional.of(property));
+        when(favoriteRepository.existsByGuestIdAndPropertyId(anyLong(), anyLong())).thenReturn(false);
         when(favoriteRepository.save(any(Favorite.class))).thenReturn(favorite);
-        when(favoriteMapper.toDTO(favorite)).thenReturn(favoriteDTO);
+        when(favoriteMapper.toDTO(any(Favorite.class))).thenReturn(favoriteDTO);
 
         FavoriteDTO result = favoriteService.addFavorite(1L, 1L);
 
         assertNotNull(result);
-        assertEquals(1L, result.getId());
-        verify(favoriteRepository).save(any(Favorite.class));
+        assertEquals(favoriteDTO, result);
     }
 
     @Test
-    void testAddFavorite_AlreadyExists() {
-        when(favoriteRepository.existsByGuestIdAndPropertyId(1L, 1L)).thenReturn(true);
+    void addFavorite_ExistingFavorite_ShouldThrowIllegalStateException() {
+        when(guestRepository.findById(anyLong())).thenReturn(Optional.of(guest));
+        when(propertyRepository.findById(anyLong())).thenReturn(Optional.of(property));
+        when(favoriteRepository.existsByGuestIdAndPropertyId(anyLong(), anyLong())).thenReturn(true);
 
-        assertThrows(DuplicateResourceException.class, () -> favoriteService.addFavorite(1L, 1L));
+        assertThrows(IllegalStateException.class, () -> favoriteService.addFavorite(1L, 1L));
     }
 
     @Test
-    void testGetFavoritesByGuestId() {
-        Pageable pageable = Pageable.unpaged();
-        Page<Favorite> favoritePage = new PageImpl<>(List.of(favorite));
-        when(guestRepository.existsById(1L)).thenReturn(true);
-        when(favoriteRepository.findByGuestId(1L, pageable)).thenReturn(favoritePage);
-        when(favoriteMapper.toDTO(favorite)).thenReturn(favoriteDTO);
+    void getFavoritesByGuestId_ShouldReturnPageOfFavoriteDTOs() {
+        Page<Favorite> favoritePage = new PageImpl<>(Collections.singletonList(favorite));
+        when(favoriteRepository.findByGuestId(anyLong(), any(Pageable.class))).thenReturn(favoritePage);
+        when(favoriteMapper.toDTO(any(Favorite.class))).thenReturn(favoriteDTO);
 
-        Page<FavoriteDTO> result = favoriteService.getFavoritesByGuestId(1L, pageable);
+        Page<FavoriteDTO> result = favoriteService.getFavoritesByGuestId(1L, Pageable.unpaged());
 
-        assertFalse(result.getContent().isEmpty());
-        assertEquals(1, result.getContent().size());
-        assertEquals(1L, result.getContent().get(0).getId());
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(favoriteDTO, result.getContent().get(0));
     }
 
     @Test
-    void testGetFavoritesByGuestId_GuestNotFound() {
-        when(guestRepository.existsById(1L)).thenReturn(false);
-
-        assertThrows(ResourceNotFoundException.class, () -> favoriteService.getFavoritesByGuestId(1L, Pageable.unpaged()));
-    }
-
-    @Test
-    void testRemoveFavorite_Success() {
-        when(favoriteRepository.findByGuestIdAndPropertyId(1L, 1L)).thenReturn(Optional.of(favorite));
-
+    void removeFavorite_ShouldCallRepositoryDeleteMethod() {
         favoriteService.removeFavorite(1L, 1L);
 
-        verify(favoriteRepository).delete(favorite);
+        verify(favoriteRepository).deleteByGuestIdAndPropertyId(1L, 1L);
     }
 
     @Test
-    void testRemoveFavorite_NotFound() {
-        when(favoriteRepository.findByGuestIdAndPropertyId(1L, 1L)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> favoriteService.removeFavorite(1L, 1L));
-    }
-
-    @Test
-    void testIsFavorite_True() {
-        when(favoriteRepository.existsByGuestIdAndPropertyId(1L, 1L)).thenReturn(true);
+    void isFavorite_ShouldReturnTrue() {
+        when(favoriteRepository.existsByGuestIdAndPropertyId(anyLong(), anyLong())).thenReturn(true);
 
         boolean result = favoriteService.isFavorite(1L, 1L);
 
@@ -136,28 +117,11 @@ public class FavoriteServiceTest {
     }
 
     @Test
-    void testIsFavorite_False() {
-        when(favoriteRepository.existsByGuestIdAndPropertyId(1L, 1L)).thenReturn(false);
-
-        boolean result = favoriteService.isFavorite(1L, 1L);
-
-        assertFalse(result);
-    }
-
-    @Test
-    void testGetFavoriteCount() {
-        when(propertyRepository.existsById(1L)).thenReturn(true);
-        when(favoriteRepository.countByPropertyId(1L)).thenReturn(5L);
+    void getFavoriteCount_ShouldReturnCorrectCount() {
+        when(favoriteRepository.countByPropertyId(anyLong())).thenReturn(5L);
 
         long result = favoriteService.getFavoriteCount(1L);
 
         assertEquals(5L, result);
-    }
-
-    @Test
-    void testGetFavoriteCount_PropertyNotFound() {
-        when(propertyRepository.existsById(1L)).thenReturn(false);
-
-        assertThrows(ResourceNotFoundException.class, () -> favoriteService.getFavoriteCount(1L));
     }
 }

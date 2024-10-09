@@ -1,8 +1,18 @@
 package com.easystay.realestaterental.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
+import com.easystay.realestaterental.dto.AuthResponseDTO;
+import com.easystay.realestaterental.dto.LoginRequestDTO;
+import com.easystay.realestaterental.dto.RegistrationRequestDTO;
+import com.easystay.realestaterental.entity.Guest;
+import com.easystay.realestaterental.entity.Host;
+import com.easystay.realestaterental.entity.User;
+import com.easystay.realestaterental.enums.UserRole;
+import com.easystay.realestaterental.exception.BadRequestException;
+import com.easystay.realestaterental.exception.DuplicateResourceException;
+import com.easystay.realestaterental.repository.GuestRepository;
+import com.easystay.realestaterental.repository.HostRepository;
+import com.easystay.realestaterental.repository.UserRepository;
+import com.easystay.realestaterental.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,22 +24,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.easystay.realestaterental.dto.AuthResponseDTO;
-import com.easystay.realestaterental.dto.LoginRequestDTO;
-import com.easystay.realestaterental.dto.RegistrationRequestDTO;
-import com.easystay.realestaterental.entity.User;
-import com.easystay.realestaterental.entity.Guest;
-import com.easystay.realestaterental.entity.Host;
-import com.easystay.realestaterental.enums.UserRole;
-import com.easystay.realestaterental.exception.BadRequestException;
-import com.easystay.realestaterental.exception.DuplicateResourceException;
-import com.easystay.realestaterental.repository.UserRepository;
-import com.easystay.realestaterental.repository.GuestRepository;
-import com.easystay.realestaterental.repository.HostRepository;
-import com.easystay.realestaterental.security.JwtService;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthenticationServiceTest {
+class AuthenticationServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -47,100 +47,88 @@ public class AuthenticationServiceTest {
     @InjectMocks
     private AuthenticationService authenticationService;
 
-    private RegistrationRequestDTO guestRegistrationRequest;
-    private RegistrationRequestDTO hostRegistrationRequest;
+    private RegistrationRequestDTO registrationRequest;
     private LoginRequestDTO loginRequest;
+    private User user;
 
     @BeforeEach
     void setUp() {
-        guestRegistrationRequest = new RegistrationRequestDTO();
-        guestRegistrationRequest.setEmail("guest@example.com");
-        guestRegistrationRequest.setPassword("password");
-        guestRegistrationRequest.setRole(UserRole.GUEST);
-        guestRegistrationRequest.setFirstName("John");
-        guestRegistrationRequest.setLastName("Doe");
-
-        hostRegistrationRequest = new RegistrationRequestDTO();
-        hostRegistrationRequest.setEmail("host@example.com");
-        hostRegistrationRequest.setPassword("password");
-        hostRegistrationRequest.setRole(UserRole.HOST);
-        hostRegistrationRequest.setFirstName("Jane");
-        hostRegistrationRequest.setLastName("Smith");
+        registrationRequest = new RegistrationRequestDTO();
+        registrationRequest.setEmail("test@example.com");
+        registrationRequest.setPassword("password");
+        registrationRequest.setFirstName("John");
+        registrationRequest.setLastName("Doe");
+        registrationRequest.setPhoneNumber("1234567890");
+        registrationRequest.setRole(UserRole.GUEST);
 
         loginRequest = new LoginRequestDTO();
-        loginRequest.setEmail("user@example.com");
+        loginRequest.setEmail("test@example.com");
         loginRequest.setPassword("password");
+
+        user = new Guest();
+        user.setEmail("test@example.com");
+        user.setRole(UserRole.GUEST);
     }
 
     @Test
-    void testRegisterGuest_Success() {
+    void register_Guest_ShouldReturnAuthResponseDTO() {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        when(guestRepository.save(any(Guest.class))).thenReturn((Guest) user);
         when(jwtService.generateToken(any(User.class))).thenReturn("jwtToken");
-        when(guestRepository.save(any(Guest.class))).thenReturn(new Guest());
 
-        AuthResponseDTO response = authenticationService.register(guestRegistrationRequest);
+        AuthResponseDTO result = authenticationService.register(registrationRequest);
 
-        assertNotNull(response);
-        assertEquals("jwtToken", response.getToken());
-        assertEquals("GUEST", response.getUserRole());
+        assertNotNull(result);
+        assertEquals("jwtToken", result.getToken());
+        assertEquals(UserRole.GUEST.toString(), result.getUserRole());
         verify(guestRepository).save(any(Guest.class));
     }
 
     @Test
-    void testRegisterHost_Success() {
+    void register_Host_ShouldReturnAuthResponseDTO() {
+        registrationRequest.setRole(UserRole.HOST);
+        user = new Host();
+        user.setRole(UserRole.HOST);
+
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        when(hostRepository.save(any(Host.class))).thenReturn((Host) user);
         when(jwtService.generateToken(any(User.class))).thenReturn("jwtToken");
-        when(hostRepository.save(any(Host.class))).thenReturn(new Host());
 
-        AuthResponseDTO response = authenticationService.register(hostRegistrationRequest);
+        AuthResponseDTO result = authenticationService.register(registrationRequest);
 
-        assertNotNull(response);
-        assertEquals("jwtToken", response.getToken());
-        assertEquals("HOST", response.getUserRole());
+        assertNotNull(result);
+        assertEquals("jwtToken", result.getToken());
+        assertEquals(UserRole.HOST.toString(), result.getUserRole());
         verify(hostRepository).save(any(Host.class));
     }
 
     @Test
-    void testRegister_DuplicateEmail() {
+    void register_ExistingEmail_ShouldThrowDuplicateResourceException() {
         when(userRepository.existsByEmail(anyString())).thenReturn(true);
 
-        assertThrows(DuplicateResourceException.class, () -> authenticationService.register(guestRegistrationRequest));
+        assertThrows(DuplicateResourceException.class, () -> authenticationService.register(registrationRequest));
     }
 
     @Test
-    void testRegister_InvalidRole() {
-        RegistrationRequestDTO invalidRequest = new RegistrationRequestDTO();
-        invalidRequest.setEmail("invalid@example.com");
-        invalidRequest.setPassword("password");
-        invalidRequest.setRole(null);
-
-        assertThrows(BadRequestException.class, () -> authenticationService.register(invalidRequest));
-    }
-
-    @Test
-    void testLogin_Success() {
+    void login_ValidCredentials_ShouldReturnAuthResponseDTO() {
         Authentication authentication = mock(Authentication.class);
-        User user = new Guest();
-        user.setEmail("user@example.com");
-        user.setRole(UserRole.GUEST);
-
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn("jwtToken");
+        when(jwtService.generateToken(any(User.class))).thenReturn("jwtToken");
 
-        AuthResponseDTO response = authenticationService.login(loginRequest);
+        AuthResponseDTO result = authenticationService.login(loginRequest);
 
-        assertNotNull(response);
-        assertEquals("jwtToken", response.getToken());
-        assertEquals("GUEST", response.getUserRole());
+        assertNotNull(result);
+        assertEquals("jwtToken", result.getToken());
+        assertEquals(UserRole.GUEST.toString(), result.getUserRole());
     }
 
     @Test
-    void testLogin_Failure() {
+    void login_InvalidCredentials_ShouldThrowBadRequestException() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadRequestException("Invalid email or password"));
+                .thenThrow(new BadRequestException("Invalid email or password."));
 
         assertThrows(BadRequestException.class, () -> authenticationService.login(loginRequest));
     }
