@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Use descriptive names for credentials and keep them secret
-        SONAR_CREDENTIALS = credentials('real-estate-sonarqube-credentials')
+        SONAR_TOKEN = credentials('real-estate-sonarqube-credentials')
         DOCKER_CREDENTIALS = credentials('real-estate-dockerhub-credentials')
 
         // Project-specific variables
@@ -50,13 +50,13 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQubeServer') {
+                withSonarQubeEnv('SonarQube') {
                     bat """
                         mvn sonar:sonar ^
                         -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
                         -Dsonar.projectName="${SONAR_PROJECT_NAME}" ^
                         -Dsonar.host.url=${SONAR_HOST_URL} ^
-                        -Dsonar.token=${SONAR_CREDENTIALS_PSW}
+                        -Dsonar.token=${SONAR_TOKEN}
                     """
                 }
             }
