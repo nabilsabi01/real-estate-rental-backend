@@ -4,10 +4,11 @@ pipeline {
     environment {
         SONAR_CREDENTIALS = 'real-estate-sonarqube-credentials'  // SonarQube credentials ID
         DOCKER_CREDENTIALS = 'real-estate-dockerhub-credentials' // Docker Hub credentials ID
-        DOCKER_IMAGE = 'nabilsabi/real-estate-rental-backend'            // Docker image name with your Docker Hub username
+        DOCKER_IMAGE = 'nabilsabi/real-estate-rental-backend'    // Docker image name with your Docker Hub username
         DOCKER_TAG = "${env.BUILD_NUMBER}"                       // Tag the Docker image with the build number
         SONAR_HOST_URL = 'http://localhost:9000'                 // SonarQube server URL (adjust as needed)
-        SONAR_PROJECT_KEY = 'real-estate-app'                // SonarQube project key
+        SONAR_PROJECT_KEY = 'real-estate-app'                    // SonarQube project key
+        GIT_REPO = 'https://github.com/nabilsabi01/real-estate-rental-backend.git'  // Your GitHub repository link
     }
 
     tools {
@@ -18,19 +19,20 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm  // Checkout code from version control (e.g., Git)
+                // Checkout code from your GitHub repository
+                git branch: 'main', url: "${env.GIT_REPO}"
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests'  // Build the project and skip tests
+                bat 'mvn clean package -DskipTests'  // Build the project and skip tests (use bat for Windows)
             }
         }
 
         stage('Unit Tests') {
             steps {
-                sh 'mvn test'  // Run unit tests
+                bat 'mvn test'  // Run unit tests using bat command
             }
             post {
                 always {
@@ -43,10 +45,10 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     // Run SonarQube analysis with credentials and project key
-                    sh """
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                    bat """
+                        mvn sonar:sonar ^
+                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
+                        -Dsonar.host.url=${SONAR_HOST_URL} ^
                         -Dsonar.login=${SONAR_CREDENTIALS}
                     """
                 }
@@ -65,7 +67,7 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image using the Dockerfile
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
         }
@@ -73,19 +75,17 @@ pipeline {
         stage('Docker Push') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS}") {
-                        // Push the image with the build tag and 'latest' tag
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push('latest')
-                    }
+                    bat "docker login -u %DOCKER_USER% -p %DOCKER_PASSWORD%" // Docker credentials passed via env variables
+                    bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}" // Push the tagged image
+                    bat "docker push ${DOCKER_IMAGE}:latest"  // Push the latest tag
                 }
             }
         }
 
         stage('Deploy to Staging') {
             steps {
-                // Use Docker Compose to deploy to the staging environment
-                sh """
+                // Use Docker Compose to deploy to the staging environment (Windows-compatible commands)
+                bat """
                     docker-compose -f docker-compose.staging.yml down
                     docker-compose -f docker-compose.staging.yml up -d
                 """
@@ -95,7 +95,7 @@ pipeline {
         stage('Integration Tests on Staging') {
             steps {
                 // Run integration tests on the staging environment
-                sh 'mvn verify -Dspring.profiles.active=staging'
+                bat 'mvn verify -Dspring.profiles.active=staging'
             }
         }
 
@@ -105,7 +105,7 @@ pipeline {
             }
             steps {
                 input 'Deploy to production?'  // Manual confirmation before deploying to production
-                sh """
+                bat """
                     docker-compose -f docker-compose.prod.yml down
                     docker-compose -f docker-compose.prod.yml up -d
                 """
@@ -119,11 +119,11 @@ pipeline {
         }
         success {
             echo 'Pipeline succeeded!'  // Success message
-            // Add notification logic here (e.g., Slack, email)
+            echo "Check the GitHub repo for the code: ${env.GIT_REPO}"  // Print the GitHub repo link
         }
         failure {
             echo 'Pipeline failed!'  // Failure message
-            // Add failure handling or notifications here
+            echo "Check the GitHub repo for the code: ${env.GIT_REPO}"  // Print the GitHub repo link
         }
     }
 }
