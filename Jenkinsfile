@@ -12,8 +12,8 @@ pipeline {
     }
 
     tools {
-        maven 'Maven 3.8.4'  // Use Maven for the build
-        jdk 'JDK 17'         // Use JDK 17 for the Java project
+        maven 'Maven 3.9.9'  // Use Maven for the build
+        jdk 'JDK17'         // Use JDK 17 for the Java project
     }
 
     stages {
