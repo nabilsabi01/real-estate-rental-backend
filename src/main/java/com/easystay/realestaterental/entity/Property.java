@@ -2,9 +2,7 @@ package com.easystay.realestaterental.entity;
 
 import com.easystay.realestaterental.enums.PropertyType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -20,10 +18,7 @@ import java.util.Set;
 @Table(name = "properties")
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Property {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,7 +30,7 @@ public class Property {
     private String description;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "location_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "location_id", referencedColumnName = "id")
     private Location location;
 
     @Column(name = "price_per_night", nullable = false)
@@ -83,4 +78,18 @@ public class Property {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public double getAverageRating() {
+        if (reviews.isEmpty()) {
+            return 0;
+        }
+        return reviews.stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0);
+    }
+
+    public int getTotalReviews() {
+        return reviews.size();
+    }
 }

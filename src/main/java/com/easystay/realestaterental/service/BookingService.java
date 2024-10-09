@@ -89,4 +89,10 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELED);
         bookingRepository.save(booking);
     }
+
+    public boolean isBookingOwner(Long bookingId, Long guestId) {
+        return bookingRepository.findById(bookingId)
+                .map(booking -> booking.getGuest().getId().equals(guestId))
+                .orElse(false);
+    }
 }

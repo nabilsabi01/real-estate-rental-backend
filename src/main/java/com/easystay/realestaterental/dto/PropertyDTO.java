@@ -4,12 +4,11 @@ import com.easystay.realestaterental.enums.PropertyType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class PropertyDTO {
@@ -46,15 +45,21 @@ public class PropertyDTO {
     @NotNull(message = "Host ID is required")
     private Long hostId;
 
-    private List<Long> amenityIds;
-    private List<Long> photoIds;
-    private List<Long> reviewIds;
-    private List<Long> bookingIds;
-    private List<Long> favoriteIds;
+    private Set<Long> amenityIds;
+    private List<PhotoDTO> photos;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Double averageRating;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Integer totalReviews;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Boolean isFavorited;
 }

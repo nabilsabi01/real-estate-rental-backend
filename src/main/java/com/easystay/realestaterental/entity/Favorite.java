@@ -24,5 +24,6 @@ public class Favorite {
     private Guest guest;
 
     @CreationTimestamp
+    @Column(name = "favorited_at")
     private LocalDateTime favoritedAt;
 }

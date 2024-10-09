@@ -3,12 +3,14 @@ package com.easystay.realestaterental.service;
 import com.easystay.realestaterental.dto.AuthResponseDTO;
 import com.easystay.realestaterental.dto.LoginRequestDTO;
 import com.easystay.realestaterental.dto.RegistrationRequestDTO;
+import com.easystay.realestaterental.entity.Admin;
 import com.easystay.realestaterental.entity.Guest;
 import com.easystay.realestaterental.entity.Host;
 import com.easystay.realestaterental.entity.User;
 import com.easystay.realestaterental.enums.UserRole;
 import com.easystay.realestaterental.exception.BadRequestException;
 import com.easystay.realestaterental.exception.DuplicateResourceException;
+import com.easystay.realestaterental.repository.AdminRepository;
 import com.easystay.realestaterental.repository.GuestRepository;
 import com.easystay.realestaterental.repository.HostRepository;
 import com.easystay.realestaterental.repository.UserRepository;
@@ -28,6 +30,7 @@ public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final HostRepository hostRepository;
+    private final AdminRepository adminRepository;
     private final GuestRepository guestRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -45,7 +48,7 @@ public class AuthenticationService {
         user = switch (role) {
             case HOST -> new Host();
             case GUEST -> new Guest();
-            default -> throw new BadRequestException("Invalid role provided.");
+            case ADMIN -> new Admin();
         };
 
         // Set common user properties
@@ -59,6 +62,8 @@ public class AuthenticationService {
         // Save the user based on role
         if (user instanceof Host) {
             hostRepository.save((Host) user);
+        } else if (user instanceof Admin) {
+            adminRepository.save((Admin) user);
         } else {
             guestRepository.save((Guest) user);
         }
@@ -70,12 +75,9 @@ public class AuthenticationService {
 
     public AuthResponseDTO login(LoginRequestDTO request) {
         try {
-            // Authenticate user using email and password
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
-
-            // Retrieve authenticated user and generate token
             User user = (User) authentication.getPrincipal();
             String token = jwtService.generateToken(user);
             return new AuthResponseDTO(token, user.getRole().toString());

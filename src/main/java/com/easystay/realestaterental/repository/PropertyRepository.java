@@ -2,6 +2,8 @@ package com.easystay.realestaterental.repository;
 
 import com.easystay.realestaterental.entity.Property;
 import com.easystay.realestaterental.enums.PropertyType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -11,31 +13,26 @@ import java.util.List;
 
 @Repository
 public interface PropertyRepository extends JpaRepository<Property, Long> {
-    List<Property> findByHostId(Long hostId);
+    Page<Property> findByHostId(Long hostId, Pageable pageable);
 
-    List<Property> findByPropertyType(PropertyType propertyType);
+    Page<Property> findByPropertyType(PropertyType propertyType, Pageable pageable);
 
-    List<Property> findByPricePerNightBetween(BigDecimal minPrice, BigDecimal maxPrice);
+    Page<Property> findByPricePerNightBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 
     @Query("SELECT p FROM Property p WHERE p.location.city = :city")
-    List<Property> findByCity(String city);
+    Page<Property> findByCity(String city, Pageable pageable);
 
     @Query("SELECT p FROM Property p WHERE p.location.country = :country")
-    List<Property> findByCountry(String country);
+    Page<Property> findByCountry(String country, Pageable pageable);
 
     @Query("SELECT p FROM Property p JOIN p.amenities a WHERE a.id = :amenityId")
-    List<Property> findByAmenityId(Long amenityId);
+    Page<Property> findByAmenityId(Long amenityId, Pageable pageable);
 
     @Query("SELECT p FROM Property p WHERE p.maxGuests >= :guestCount")
-    List<Property> findByGuestCapacity(int guestCount);
+    Page<Property> findByGuestCapacity(int guestCount, Pageable pageable);
 
     @Query("SELECT p FROM Property p WHERE p.title LIKE %:keyword% OR p.description LIKE %:keyword%")
-    List<Property> searchProperties(String keyword);
-
-    @Query("SELECT p FROM Property p WHERE p.location.postalCode = :postalCode")
-    List<Property> findByPostalCode(String postalCode);
-
-    long countByPropertyType(PropertyType propertyType);
+    Page<Property> searchProperties(String keyword, Pageable pageable);
 
     List<Property> findTop10ByOrderByCreatedAtDesc();
 }

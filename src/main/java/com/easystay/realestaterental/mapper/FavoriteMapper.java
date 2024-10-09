@@ -12,10 +12,6 @@ public interface FavoriteMapper {
 
     @Mapping(target = "property", ignore = true)
     @Mapping(target = "guest", ignore = true)
+    @Mapping(target = "favoritedAt", ignore = true)
     Favorite toEntity(FavoriteDTO favoriteDTO);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "property", ignore = true)
-    @Mapping(target = "guest", ignore = true)
-    void updateFavoriteFromDto(FavoriteDTO dto, @MappingTarget Favorite entity);
 }

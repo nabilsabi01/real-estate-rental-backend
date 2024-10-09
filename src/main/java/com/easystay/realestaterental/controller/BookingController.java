@@ -17,8 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-
 @RestController
 @RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
@@ -36,9 +34,7 @@ public class BookingController {
     })
     public ResponseEntity<BookingDTO> createBooking(@Valid @RequestBody BookingDTO bookingDTO) {
         BookingDTO createdBooking = bookingService.createBooking(bookingDTO);
-        return ResponseEntity
-                .created(URI.create("/api/v1/bookings/" + createdBooking.getId()))
-                .body(createdBooking);
+        return new ResponseEntity<>(createdBooking, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -87,13 +83,13 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('GUEST')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('GUEST') and @bookingService.isBookingOwner(#id, authentication.principal.id)")
     @Operation(summary = "Cancel a booking", responses = {
             @ApiResponse(responseCode = "204", description = "Booking canceled successfully"),
             @ApiResponse(responseCode = "404", description = "Booking not found")
     })
-    public void cancelBooking(@PathVariable Long id) {
+    public ResponseEntity<Void> cancelBooking(@PathVariable Long id) {
         bookingService.cancelBooking(id);
+        return ResponseEntity.noContent().build();
     }
 }
