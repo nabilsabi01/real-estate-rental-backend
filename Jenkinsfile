@@ -21,7 +21,6 @@ pipeline {
         timeout(time: 2, unit: 'HOURS')
         disableConcurrentBuilds()
         buildDiscarder(logRotator(numToKeepStr: '10'))
-        ansiColor('xterm')
     }
 
     stages {
@@ -119,11 +118,11 @@ pipeline {
         }
         success {
             echo 'Pipeline succeeded!'
-            bat 'msg %USERNAME% "Build Succeeded: ${env.JOB_NAME} ${env.BUILD_NUMBER}"'
+            bat 'echo Build Succeeded: %JOB_NAME% %BUILD_NUMBER%'
         }
         failure {
             echo 'Pipeline failed!'
-            bat 'msg %USERNAME% "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"'
+            bat 'echo Build Failed: %JOB_NAME% %BUILD_NUMBER%'
         }
     }
 }
