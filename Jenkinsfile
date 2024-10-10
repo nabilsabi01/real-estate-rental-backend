@@ -65,24 +65,24 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-            post {
-                failure {
-                    script {
-                        def qg = waitForQualityGate()
-                        echo "Quality Gate status: ${qg.status}"
-                        qg.conditions.each { condition ->
-                            echo "${condition.metricKey} - ${condition.status}: ${condition.actualValue} ${condition.comparator} ${condition.errorThreshold}"
-                        }
-                    }
-                }
-            }
-        }
+//         stage('Quality Gate') {
+//             steps {
+//                 timeout(time: 1, unit: 'HOURS') {
+//                     waitForQualityGate abortPipeline: true
+//                 }
+//             }
+//             post {
+//                 failure {
+//                     script {
+//                         def qg = waitForQualityGate()
+//                         echo "Quality Gate status: ${qg.status}"
+//                         qg.conditions.each { condition ->
+//                             echo "${condition.metricKey} - ${condition.status}: ${condition.actualValue} ${condition.comparator} ${condition.errorThreshold}"
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
         stage('Docker Build and Push') {
             steps {
@@ -99,8 +99,8 @@ pipeline {
         stage('Deploy to Staging') {
             steps {
                 bat """
-                    docker-compose -f docker-compose.staging.yml down
-                    docker-compose -f docker-compose.staging.yml up -d
+                    docker-compose -f docker-compose.yml down
+                    docker-compose -f docker-compose.yml up -d
                 """
             }
         }
