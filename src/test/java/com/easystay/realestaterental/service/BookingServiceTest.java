@@ -6,7 +6,6 @@ import com.easystay.realestaterental.entity.Guest;
 import com.easystay.realestaterental.entity.Property;
 import com.easystay.realestaterental.enums.BookingStatus;
 import com.easystay.realestaterental.exception.BookingConflictException;
-import com.easystay.realestaterental.exception.ResourceNotFoundException;
 import com.easystay.realestaterental.mapper.BookingMapper;
 import com.easystay.realestaterental.repository.BookingRepository;
 import com.easystay.realestaterental.repository.GuestRepository;

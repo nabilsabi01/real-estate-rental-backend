@@ -3,7 +3,6 @@ package com.easystay.realestaterental.mapper;
 import com.easystay.realestaterental.dto.AmenityDTO;
 import com.easystay.realestaterental.entity.Amenity;
 import org.mapstruct.*;
-import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface AmenityMapper {

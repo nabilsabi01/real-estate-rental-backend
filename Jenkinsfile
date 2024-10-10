@@ -59,18 +59,22 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 30, unit: 'MINUTES') {
-                    script {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            error "Quality Gate failed: ${qg.status}"
-                        }
-                    }
-                }
-            }
-        }
+       stage('Quality Gate') {
+           steps {
+               timeout(time: 1, unit: 'HOURS') {
+                   script {
+                       def qg = waitForQualityGate()
+                       if (qg.status != 'OK') {
+                           echo "Quality Gate failed: ${qg.status}"
+                           qg.conditions.each { condition ->
+                               echo "${condition.metricKey} - ${condition.status}: ${condition.actualValue} ${condition.comparator} ${condition.errorThreshold}"
+                           }
+                           error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                       }
+                   }
+               }
+           }
+       }
 
         stage('Docker Build') {
             steps {

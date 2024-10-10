@@ -15,6 +15,6 @@ public class OpenAPIConfig {
                 .info(new Info().title("Real Estate Rental API")
                         .description("Spring Boot Real Estate Rental application")
                         .version("v0.0.1")
-                        .license(new License().name("Apache 2.0").url("http://springdoc.org")));
+                        .license(new License().name("Apache 2.0").url("https://springdoc.org")));
     }
 }
