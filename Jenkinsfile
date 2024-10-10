@@ -18,7 +18,10 @@ pipeline {
     }
 
     options {
-        timeout(time: 1, unit: 'HOURS')
+        timeout(time: 2, unit: 'HOURS')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        ansiColor('xterm')
     }
 
     stages {
@@ -28,19 +31,20 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build and Test') {
             steps {
-                bat 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Unit Tests') {
-            steps {
-                bat 'mvn test'
+                bat 'mvn clean verify org.jacoco:jacoco-maven-plugin:report'
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: true
+                    jacoco(
+                        execPattern: '**/target/*.exec',
+                        classPattern: '**/target/classes',
+                        sourcePattern: '**/src/main/java',
+                        exclusionPattern: '**/src/test*'
+                    )
+                    archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
                 }
             }
         }
@@ -50,52 +54,45 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     bat """
                         mvn sonar:sonar ^
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
-                        -Dsonar.projectName="${SONAR_PROJECT_NAME}" ^
-                        -Dsonar.host.url=${SONAR_HOST_URL} ^
-                        -Dsonar.token=${SONAR_TOKEN}
+                        -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
+                        -Dsonar.projectName="%SONAR_PROJECT_NAME%" ^
+                        -Dsonar.host.url=%SONAR_HOST_URL% ^
+                        -Dsonar.token=%SONAR_TOKEN% ^
+                        -Dsonar.java.coveragePlugin=jacoco ^
+                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml ^
+                        -Dsonar.exclusions=**/generated-sources/**,**/model/**,**/config/**
                     """
                 }
             }
         }
 
-       stage('Quality Gate') {
-           steps {
-               timeout(time: 1, unit: 'HOURS') {
-                   script {
-                       def qg = waitForQualityGate()
-                       if (qg.status != 'OK') {
-                           echo "Quality Gate failed: ${qg.status}"
-                           qg.conditions.each { condition ->
-                               echo "${condition.metricKey} - ${condition.status}: ${condition.actualValue} ${condition.comparator} ${condition.errorThreshold}"
-                           }
-                           error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                       }
-                   }
-               }
-           }
-       }
-
-        stage('Docker Build') {
+        stage('Quality Gate') {
             steps {
-                script {
-                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                    bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+            post {
+                failure {
+                    script {
+                        def qg = waitForQualityGate()
+                        echo "Quality Gate status: ${qg.status}"
+                        qg.conditions.each { condition ->
+                            echo "${condition.metricKey} - ${condition.status}: ${condition.actualValue} ${condition.comparator} ${condition.errorThreshold}"
+                        }
+                    }
                 }
             }
         }
 
-        stage('Docker Push') {
+        stage('Docker Build and Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'real-estate-dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
-                    bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                    bat "docker push ${DOCKER_IMAGE}:latest"
-                }
-            }
-            post {
-                always {
-                    bat "docker logout"
+                script {
+                    docker.withRegistry('', 'real-estate-dockerhub-credentials') {
+                        def customImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                        customImage.push()
+                        customImage.push("latest")
+                    }
                 }
             }
         }
@@ -122,9 +119,11 @@ pipeline {
         }
         success {
             echo 'Pipeline succeeded!'
+            bat 'msg %USERNAME% "Build Succeeded: ${env.JOB_NAME} ${env.BUILD_NUMBER}"'
         }
         failure {
             echo 'Pipeline failed!'
+            bat 'msg %USERNAME% "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"'
         }
     }
 }
