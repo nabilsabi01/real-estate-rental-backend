@@ -1,21 +1,24 @@
 package com.easystay.realestaterental.controller;
 
 import com.easystay.realestaterental.dto.FavoriteDTO;
+import com.easystay.realestaterental.entity.Guest;
 import com.easystay.realestaterental.service.FavoriteService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for managing favorites.
+ */
 @RestController
 @RequestMapping("/api/v1/favorites")
 @RequiredArgsConstructor
@@ -24,59 +27,95 @@ import org.springframework.web.bind.annotation.*;
 public class FavoriteController {
     private final FavoriteService favoriteService;
 
-    @PostMapping("/guests/{guestId}/properties/{propertyId}")
-    @PreAuthorize("hasRole('GUEST') and #guestId == authentication.principal.id")
+    /**
+     * Adds a property to the user's favorites.
+     *
+     * @param guest      the authenticated guest
+     * @param propertyId the ID of the property to favorite
+     * @return the created favorite DTO
+     */
+    @PostMapping("/{propertyId}")
     @Operation(summary = "Add a property to favorites")
+    @ApiResponse(responseCode = "200", description = "Property added to favorites successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input")
+    @ApiResponse(responseCode = "404", description = "Property not found")
     public ResponseEntity<FavoriteDTO> addFavorite(
-            @Parameter(description = "ID of the guest", required = true)
-            @PathVariable @Positive Long guestId,
-            @Parameter(description = "ID of the property", required = true)
+            @AuthenticationPrincipal Guest guest,
             @PathVariable @Positive Long propertyId) {
-        FavoriteDTO favoriteDTO = favoriteService.addFavorite(guestId, propertyId);
-        return new ResponseEntity<>(favoriteDTO, HttpStatus.CREATED);
+        FavoriteDTO favorite = favoriteService.addFavorite(guest.getId(), propertyId);
+        return ResponseEntity.ok(favorite);
     }
 
-    @GetMapping("/guests/{guestId}")
-    @PreAuthorize("hasRole('GUEST') and #guestId == authentication.principal.id")
-    @Operation(summary = "Get favorites for a guest")
-    public ResponseEntity<Page<FavoriteDTO>> getFavoritesByGuestId(
-            @Parameter(description = "ID of the guest", required = true)
-            @PathVariable @Positive Long guestId,
-            @PageableDefault(size = 20, sort = "favoritedAt") Pageable pageable) {
-        Page<FavoriteDTO> favorites = favoriteService.getFavoritesByGuestId(guestId, pageable);
-        return ResponseEntity.ok(favorites);
-    }
-
-    @DeleteMapping("/guests/{guestId}/properties/{propertyId}")
-    @PreAuthorize("hasRole('GUEST') and #guestId == authentication.principal.id")
+    /**
+     * Removes a property from the user's favorites.
+     *
+     * @param guest      the authenticated guest
+     * @param propertyId the ID of the property to unfavorite
+     * @return no content if successful
+     */
+    @DeleteMapping("/{propertyId}")
     @Operation(summary = "Remove a property from favorites")
+    @ApiResponse(responseCode = "204", description = "Property removed from favorites successfully")
+    @ApiResponse(responseCode = "404", description = "Favorite not found")
     public ResponseEntity<Void> removeFavorite(
-            @Parameter(description = "ID of the guest", required = true)
-            @PathVariable @Positive Long guestId,
-            @Parameter(description = "ID of the property", required = true)
+            @AuthenticationPrincipal Guest guest,
             @PathVariable @Positive Long propertyId) {
-        favoriteService.removeFavorite(guestId, propertyId);
+        favoriteService.removeFavorite(guest.getId(), propertyId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/guests/{guestId}/properties/{propertyId}")
-    @PreAuthorize("hasRole('GUEST') and #guestId == authentication.principal.id")
-    @Operation(summary = "Check if a property is in favorites")
-    public ResponseEntity<Boolean> isFavorite(
-            @Parameter(description = "ID of the guest", required = true)
-            @PathVariable @Positive Long guestId,
-            @Parameter(description = "ID of the property", required = true)
-            @PathVariable @Positive Long propertyId) {
-        boolean isFavorite = favoriteService.isFavorite(guestId, propertyId);
-        return ResponseEntity.ok(isFavorite);
+    /**
+     * Gets all favorite properties for the logged-in guest.
+     *
+     * @param guest    the authenticated guest
+     * @return a page of favorite DTOs
+     */
+    @GetMapping
+    @Operation(summary = "Get favorites for the logged-in guest")
+    public ResponseEntity<Page<FavoriteDTO>> getFavorites(
+            @AuthenticationPrincipal Guest guest,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "favoritedAt,desc") String sort) {
+
+        String[] sortParams = sort.split(",");
+        Sort.Direction direction = sortParams.length > 1 && sortParams[1].equalsIgnoreCase("asc") ?
+                Sort.Direction.ASC : Sort.Direction.DESC;
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortParams[0]));
+
+        return ResponseEntity.ok(favoriteService.getFavoritesByGuestId(guest.getId(), pageRequest));
     }
 
-    @GetMapping("/properties/{propertyId}/count")
+    /**
+     * Gets the number of times a property has been favorited.
+     *
+     * @param propertyId the ID of the property
+     * @return the count of favorites for the property
+     */
+    @GetMapping("/count/{propertyId}")
     @Operation(summary = "Get the number of times a property has been favorited")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved favorite count")
     public ResponseEntity<Long> getFavoriteCount(
-            @Parameter(description = "ID of the property", required = true)
             @PathVariable @Positive Long propertyId) {
         long count = favoriteService.getFavoriteCount(propertyId);
         return ResponseEntity.ok(count);
+    }
+
+    /**
+     * Checks if a property is in the user's favorites.
+     *
+     * @param guest      the authenticated guest
+     * @param propertyId the ID of the property to check
+     * @return true if the property is favorited, false otherwise
+     */
+    @GetMapping("/check/{propertyId}")
+    @Operation(summary = "Check if a property is in favorites")
+    @ApiResponse(responseCode = "200", description = "Successfully checked favorite status")
+    public ResponseEntity<Boolean> isFavorite(
+            @AuthenticationPrincipal Guest guest,
+            @PathVariable @Positive Long propertyId) {
+        boolean isFavorite = favoriteService.isFavorite(guest.getId(), propertyId);
+        return ResponseEntity.ok(isFavorite);
     }
 }

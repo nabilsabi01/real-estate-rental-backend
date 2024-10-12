@@ -56,7 +56,14 @@ application:
 # Swagger / OpenAPI Configuration
 springdoc:
   api-docs:
-    path: /api-docs
+    enabled: true
+    path: /v3/api-docs
   swagger-ui:
+    enabled: true
     path: /swagger-ui.html
-    operationsSorter: method
+  operation-description:
+    enabled: true
+  info:
+    title: Real Estate Rental API
+    description: API documentation for the Real Estate Rental platform
+    version: v1.0

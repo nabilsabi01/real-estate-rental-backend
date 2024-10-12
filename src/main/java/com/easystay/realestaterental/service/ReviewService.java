@@ -5,6 +5,7 @@ import com.easystay.realestaterental.entity.Guest;
 import com.easystay.realestaterental.entity.Property;
 import com.easystay.realestaterental.entity.Review;
 import com.easystay.realestaterental.exception.ResourceNotFoundException;
+import com.easystay.realestaterental.exception.UnauthorizedException;
 import com.easystay.realestaterental.mapper.ReviewMapper;
 import com.easystay.realestaterental.repository.GuestRepository;
 import com.easystay.realestaterental.repository.PropertyRepository;
@@ -20,67 +21,86 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ReviewService {
     private final ReviewRepository reviewRepository;
-    private final PropertyRepository propertyRepository;
     private final GuestRepository guestRepository;
+    private final PropertyRepository propertyRepository;
     private final ReviewMapper reviewMapper;
 
+    /**
+     * Adds a new review for a property.
+     *
+     * @param guestId    the ID of the guest creating the review
+     * @param propertyId the ID of the property being reviewed
+     * @param reviewDTO  the review data
+     * @return the created review DTO
+     */
     @Transactional
-    public ReviewDTO createReview(ReviewDTO reviewDTO) {
-        Property property = propertyRepository.findById(reviewDTO.getPropertyId())
-                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
-        Guest guest = guestRepository.findById(reviewDTO.getGuestId())
+    public ReviewDTO addReview(Long guestId, Long propertyId, ReviewDTO reviewDTO) {
+        Guest guest = guestRepository.findById(guestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Guest not found"));
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+
+        if (reviewRepository.existsByGuestIdAndPropertyId(guestId, propertyId)) {
+            throw new IllegalStateException("Guest has already reviewed this property");
+        }
 
         Review review = reviewMapper.toEntity(reviewDTO);
-        review.setProperty(property);
         review.setGuest(guest);
+        review.setProperty(property);
 
         Review savedReview = reviewRepository.save(review);
         return reviewMapper.toDTO(savedReview);
     }
 
-    public ReviewDTO getReviewById(Long id) {
-        Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
-        return reviewMapper.toDTO(review);
-    }
-
-    public Page<ReviewDTO> getReviewsByPropertyId(Long propertyId, Pageable pageable) {
+    /**
+     * Retrieves reviews for a specific property.
+     *
+     * @param propertyId the ID of the property
+     * @param pageable   the pagination information
+     * @return a page of review DTOs
+     */
+    public Page<ReviewDTO> getReviewsForProperty(Long propertyId, Pageable pageable) {
         return reviewRepository.findByPropertyId(propertyId, pageable)
                 .map(reviewMapper::toDTO);
     }
 
-    public Page<ReviewDTO> getReviewsByGuestId(Long guestId, Pageable pageable) {
-        return reviewRepository.findByGuestId(guestId, pageable)
-                .map(reviewMapper::toDTO);
-    }
-
-    public Page<ReviewDTO> getReviewsByHostId(Long hostId, Pageable pageable) {
-        return reviewRepository.findByPropertyHostId(hostId, pageable)
-                .map(reviewMapper::toDTO);
-    }
-
+    /**
+     * Updates an existing review.
+     *
+     * @param guestId   the ID of the guest updating the review
+     * @param reviewId  the ID of the review to update
+     * @param reviewDTO the updated review data
+     * @return the updated review DTO
+     */
     @Transactional
-    public ReviewDTO updateReview(Long id, ReviewDTO reviewDTO) {
-        Review review = reviewRepository.findById(id)
+    public ReviewDTO updateReview(Long guestId, Long reviewId, ReviewDTO reviewDTO) {
+        Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+
+        if (!review.getGuest().getId().equals(guestId)) {
+            throw new UnauthorizedException("Not authorized to update this review");
+        }
 
         reviewMapper.updateReviewFromDto(reviewDTO, review);
         Review updatedReview = reviewRepository.save(review);
         return reviewMapper.toDTO(updatedReview);
     }
 
+    /**
+     * Deletes a review.
+     *
+     * @param guestId  the ID of the guest deleting the review
+     * @param reviewId the ID of the review to delete
+     */
     @Transactional
-    public void deleteReview(Long id) {
-        if (!reviewRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Review not found");
-        }
-        reviewRepository.deleteById(id);
-    }
+    public void deleteReview(Long guestId, Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
 
-    public boolean isReviewOwner(Long reviewId, Long guestId) {
-        return reviewRepository.findById(reviewId)
-                .map(review -> review.getGuest().getId().equals(guestId))
-                .orElse(false);
+        if (!review.getGuest().getId().equals(guestId)) {
+            throw new UnauthorizedException("Not authorized to delete this review");
+        }
+
+        reviewRepository.delete(review);
     }
 }

@@ -16,8 +16,7 @@ public interface PropertyMapper {
 
     @Mapping(target = "hostId", source = "host.id")
     @Mapping(target = "amenityIds", expression = "java(property.getAmenities().stream().map(amenity -> amenity.getId()).collect(java.util.stream.Collectors.toSet()))")
-    @Mapping(target = "isFavorited", ignore = true)
-    PropertyDTO toDTO(Property property);
+    @Mapping(target = "isFavorited", ignore = true)    PropertyDTO toDTO(Property property);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)

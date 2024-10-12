@@ -7,6 +7,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents a favorite property for a guest in the system.
+ */
 @Entity
 @Table(name = "favorites")
 @Getter @Setter
