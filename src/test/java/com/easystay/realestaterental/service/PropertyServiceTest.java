@@ -190,8 +190,7 @@ class PropertyServiceTest {
         when(amenityRepository.findById(anyLong())).thenReturn(Optional.empty());
         when(propertyMapper.toEntity(any(PropertyDTO.class))).thenReturn(new Property());
 
-        propertyDTO.setAmenityIds(Set.of(999L)); // ID invalide
-
+        propertyDTO.setAmenityIds(Set.of(999L));
         assertThrows(ResourceNotFoundException.class, () -> propertyService.createProperty(propertyDTO, new ArrayList<>()));
 
         verify(hostRepository).findById(1L);

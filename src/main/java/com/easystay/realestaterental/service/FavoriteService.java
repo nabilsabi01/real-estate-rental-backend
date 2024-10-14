@@ -86,10 +86,13 @@ public class FavoriteService {
         return favoriteRepository.findByGuestId(guestId, pageable)
                 .map(favorite -> {
                     FavoriteDTO dto = favoriteMapper.toDTO(favorite);
-                    dto.getProperty().setIsFavorited(true);
+                    if (dto.getProperty() != null) {
+                        dto.getProperty().setIsFavorited(true);
+                    }
                     return dto;
                 });
     }
+
 
     /**
      * Gets the number of times a property has been favorited.
